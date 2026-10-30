@@ -10,7 +10,7 @@ OUT = Path(__file__).parent / "transcripts"
 UA = {"User-Agent": "Mozilla/5.0"}
 ns = {"itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"}
 
-MAX_MIN = 120
+MAX_MIN = float(os.environ.get("MAX_MIN", "120"))
 
 def push(slug):
     """Commit and push this episode now so a crashed job keeps its finished work."""

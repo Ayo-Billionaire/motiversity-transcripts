@@ -5,6 +5,8 @@ on:
       start: { description: "first episode index", default: "0" }
       end: { description: "last episode index, exclusive", default: "1393" }
       shard: { description: "episodes per job", default: "10" }
+      only: { description: "comma list of episode indexes, overrides start/end", default: "" }
+      max_min: { description: "skip episodes longer than this many minutes", default: "120" }
       model: { description: "faster-whisper model", default: "small.en" }
 permissions:
   contents: write
@@ -19,7 +21,12 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           s, e, k = int("${{ inputs.start }}"), int("${{ inputs.end }}"), int("${{ inputs.shard }}")
-          print("matrix=" + json.dumps({"include": [{"a": a, "b": min(a + k, e)} for a in range(s, e, k)]}))
+          only = "${{ inputs.only }}".strip()
+          if only:
+              inc = [{"a": int(i), "b": int(i) + 1} for i in only.split(",")]
+          else:
+              inc = [{"a": a, "b": min(a + k, e)} for a in range(s, e, k)]
+          print("matrix=" + json.dumps({"include": inc}))
           PY
   run:
     needs: plan
@@ -35,6 +42,8 @@ jobs:
         with: { python-version: "3.11" }
       - run: pip install faster-whisper==1.1.1 requests
       - run: python3 extract_cloud.py ${{ matrix.a }} ${{ matrix.b }} ${{ inputs.model }}
+        env:
+          MAX_MIN: ${{ inputs.max_min }}
       - name: commit transcripts
         if: always()
         run: |
