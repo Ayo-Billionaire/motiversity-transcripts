@@ -1,0 +1,17 @@
+name: notify
+on:
+  workflow_run:
+    workflows: [transcribe]
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  mail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 notify.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
